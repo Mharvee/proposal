@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alabi — A Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#060a14;
+    --navy:#0c1526;
+    --navy-soft:#121e35;
+    --cream:#f3ecd9;
+    --cream-dim:#cfc6ac;
+    --gold:#d9b877;
+    --gold-bright:#f3d99a;
+    --gold-dim:#8a7444;
+    --ugly:#6b6259;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--navy-deep);
+    color:var(--cream);
+    font-family:'Jost',sans-serif;
+    overflow-x:hidden;
+    width:100%;
+    height:100%;
+  }
+  #app{
+    position:relative;
+    min-height:100vh;
+    width:100%;
+    overflow:hidden;
+  }
+
+  /* ---------- background atmosphere ---------- */
+  .sky{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% -10%, rgba(217,184,119,0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 100%, rgba(217,184,119,0.06), transparent 60%),
+      linear-gradient(180deg, var(--navy-deep) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+    pointer-events:none;
+  }
+  canvas#stars{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    box-shadow: inset 0 0 220px rgba(0,0,0,0.65);
+  }
+
+  /* ---------- screens ---------- */
+  .screen{
+    position:relative;
+    z-index:5;
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:6vh 6vw;
+    text-align:center;
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  #landing.hidden{
+    opacity:0;
+    transform:translateY(-30px) scale(0.98);
+    pointer-events:none;
+    position:absolute;
+    inset:0;
+  }
+  #reveal{
+    display:none;
+    opacity:0;
+    padding-top:12vh;
+    padding-bottom:14vh;
+    align-items:flex-start;
+  }
+  #reveal.visible{
+    display:flex;
+    animation: fadeUp 1.4s ease forwards;
+  }
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(26px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .eyebrow{
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    font-size:0.68rem;
+    color:var(--gold-dim);
+    margin-bottom:1.6rem;
+    opacity:0.85;
+  }
+
+  .headline{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:500;
+    font-size:clamp(2.1rem, 6vw, 4rem);
+    line-height:1.15;
+    color:var(--cream);
+    margin:0 0 1.1rem 0;
+    text-shadow: 0 0 40px rgba(217,184,119,0.15);
+  }
+  .headline em{
+    font-style:italic;
+    color:var(--gold-bright);
+  }
+
+  .subline{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:clamp(1.2rem, 2.6vw, 1.65rem);
+    color:var(--cream-dim);
+    max-width:34rem;
+    margin:0 0 2rem 0;
+    line-height:1.4;
+  }
+
+  .fine{
+    font-size:0.92rem;
+    color:var(--cream-dim);
+    max-width:26rem;
+    line-height:1.7;
+    margin:0 0 3.2rem 0;
+    opacity:0.85;
+  }
+
+  .button-row{
+    position:relative;
+    display:flex;
+    gap:1.6rem;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    min-height:90px;
+    width:100%;
+  }
+
+  /* ---------- YES button ---------- */
+  .btn-yes{
+    position:relative;
+    padding:1.05rem 2.8rem;
+    font-family:'Jost',sans-serif;
+    font-weight:500;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-size:0.95rem;
+    color:#26200f;
+    background:linear-gradient(135deg,#f3d99a 0%, #d9b877 45%, #b8944f 100%);
+    border:none;
+    border-radius:100px;
+    cursor:pointer;
+    box-shadow:
+      0 0 0 1px rgba(243,217,154,0.4),
+      0 8px 30px rgba(217,184,119,0.35),
+      0 0 60px rgba(217,184,119,0.25);
+    overflow:hidden;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s ease;
+    z-index:3;
+  }
+  .btn-yes::before{
+    content:"";
+    position:absolute;
+    top:0; left:-150%;
+    width:60%;
+    height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform:skewX(-20deg);
+    animation: shimmer 3.4s ease-in-out infinite;
+  }
+  @keyframes shimmer{
+    0%{left:-150%;}
+    45%{left:150%;}
+    100%{left:150%;}
+  }
+  .btn-yes:hover{
+    transform:scale(1.07);
+    box-shadow:
+      0 0 0 1px rgba(243,217,154,0.6),
+      0 10px 40px rgba(217,184,119,0.5),
+      0 0 90px rgba(217,184,119,0.4);
+  }
+  .btn-yes:active{ transform:scale(0.98); }
+
+  /* ---------- NO button (static, cycles its own label) ---------- */
+  .btn-no{
+    padding:0.85rem 1.9rem;
+    font-family:'Jost', sans-serif;
+    font-weight:400;
+    font-size:0.85rem;
+    letter-spacing:0.02em;
+    color:#cfc6b6;
+    background:#4b463d;
+    border:1px solid #5c564a;
+    border-radius:6px;
+    cursor:pointer;
+    min-width:64px;
+    transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), font-size 0.3s ease, padding 0.3s ease, opacity 0.3s ease, background 0.2s ease;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35) inset, 0 3px 8px rgba(0,0,0,0.4);
+    z-index:4;
+  }
+  .btn-no:hover{
+    background:#544e42;
+  }
+  .btn-no.pulse{
+    animation: noPulse 0.4s ease;
+  }
+  @keyframes noPulse{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(0.92) rotate(-1.5deg); }
+    70%{ transform:scale(1.04) rotate(1deg); }
+    100%{ transform:scale(1) rotate(0deg); }
+  }
+  .btn-no.shrink-1{ font-size:0.8rem; padding:0.78rem 1.7rem; }
+  .btn-no.shrink-2{ font-size:0.74rem; padding:0.7rem 1.5rem; }
+  .btn-no.shrink-3{ font-size:0.66rem; padding:0.6rem 1.3rem; }
+  .btn-no.shrink-4{ font-size:0.58rem; padding:0.5rem 1.1rem; opacity:0.92; }
+  .btn-no.shrink-5{ font-size:0.5rem; padding:0.4rem 0.9rem; opacity:0.85; }
+
+  /* ---------- success burst ---------- */
+  .burst{
+    position:fixed;
+    inset:0;
+    z-index:20;
+    pointer-events:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+  }
+  .burst.play{
+    animation: burstFade 1.2s ease forwards;
+  }
+  @keyframes burstFade{
+    0%{opacity:0;}
+    15%{opacity:1;}
+    100%{opacity:0;}
+  }
+  .burst-heart{
+    position:absolute;
+    left:50%;
+    top:50%;
+    font-size:14px;
+    opacity:0;
+    animation: heartFloat 1.3s ease-out forwards;
+  }
+  .burst-heart svg{
+    width:1em;
+    height:1em;
+    display:block;
+    filter:drop-shadow(0 0 10px rgba(243,217,154,0.7));
+  }
+  @keyframes heartFloat{
+    0%{ transform:translate(-50%,-50%) scale(0.2); opacity:0; }
+    22%{ opacity:1; }
+    100%{ transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--sc)); opacity:0; }
+  }
+  .burst-core{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:34px;
+    height:34px;
+    transform:translate(-50%,-50%) scale(0);
+    filter:drop-shadow(0 0 30px rgba(243,217,154,0.6)) drop-shadow(0 0 70px rgba(217,184,119,0.35));
+    animation: coreGrow 1.2s ease-out forwards;
+  }
+  .burst-core svg{ width:100%; height:100%; }
+  @keyframes coreGrow{
+    0%{ transform:translate(-50%,-50%) scale(0); opacity:0; }
+    30%{ transform:translate(-50%,-50%) scale(1); opacity:1; }
+    100%{ transform:translate(-50%,-50%) scale(2.1); opacity:0; }
+  }
+
+  /* ---------- reveal screen content ---------- */
+  .reveal-inner{
+    max-width:920px;
+    width:100%;
+    margin:0 auto;
+  }
+  .reveal-top{ margin-bottom:4.5rem; }
+  .reveal-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:clamp(2rem, 5vw, 3.2rem);
+    color:var(--gold-bright);
+    margin:0 0 0.4rem 0;
+  }
+  .reveal-sub{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:clamp(1.1rem, 2.4vw, 1.4rem);
+    color:var(--cream-dim);
+    margin:0 0 2.2rem 0;
+  }
+  .word-stack{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem 1.4rem;
+    justify-content:center;
+    margin-bottom:2.4rem;
+  }
+  .word-stack span{
+    font-family:'Cormorant Garamond', serif;
+    font-size:clamp(1.4rem, 3vw, 2rem);
+    color:var(--cream);
+    opacity:0;
+    animation: wordIn 0.7s ease forwards;
+    position:relative;
+  }
+  .word-stack span:not(:last-child)::after{
+    content:"·";
+    color:var(--gold-dim);
+    margin-left:1.4rem;
+  }
+  @keyframes wordIn{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .reveal-para{
+    max-width:36rem;
+    margin:0 auto 5rem auto;
+    font-size:0.98rem;
+    line-height:1.85;
+    color:var(--cream-dim);
+  }
+
+  .study-heading{
+    font-family:'Cormorant Garamond', serif;
+    font-size:clamp(1.6rem,3.4vw,2.2rem);
+    color:var(--gold-bright);
+    margin-bottom:0.5rem;
+  }
+  .study-subheading{
+    font-size:0.85rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gold-dim);
+    margin-bottom:3rem;
+  }
+
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:1.1rem;
+    margin-bottom:5.5rem;
+    text-align:left;
+  }
+  .study-card{
+    background:linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+    border:1px solid rgba(217,184,119,0.16);
+    border-radius:14px;
+    padding:1.6rem 1.5rem;
+    position:relative;
+    transition: transform 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+  }
+  .study-card:hover{
+    transform:translateY(-5px);
+    border-color:rgba(217,184,119,0.45);
+    background:linear-gradient(160deg, rgba(217,184,119,0.08), rgba(255,255,255,0.02));
+  }
+  .study-num{
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.6rem;
+    color:var(--gold-dim);
+    margin-bottom:0.6rem;
+    display:block;
+  }
+  .study-title{
+    font-size:1rem;
+    color:var(--cream);
+    margin-bottom:0.55rem;
+    line-height:1.4;
+  }
+  .study-ref{
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    color:var(--gold);
+    opacity:0.75;
+    text-transform:uppercase;
+  }
+
+  .closing-line{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:clamp(1.1rem, 2.4vw, 1.5rem);
+    color:var(--cream-dim);
+    line-height:1.7;
+    margin-bottom:2.6rem;
+  }
+  .closing-line strong{
+    color:var(--gold-bright);
+    font-weight:500;
+  }
+
+  .btn-begin{
+    padding:1rem 2.4rem;
+    font-family:'Jost', sans-serif;
+    font-size:0.9rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    background:transparent;
+    border:1px solid rgba(217,184,119,0.5);
+    border-radius:100px;
+    cursor:pointer;
+    transition: all 0.35s ease;
+  }
+  .btn-begin:hover{
+    background:rgba(217,184,119,0.12);
+    border-color:var(--gold-bright);
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(217,184,119,0.2);
+  }
+
+  .final-note{
+    margin-top:2.6rem;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:1.15rem;
+    color:var(--gold-bright);
+    opacity:0;
+    max-width:26rem;
+    transition:opacity 1s ease;
+  }
+  .final-note.show{ opacity:1; }
+
+  /* small dove/light glyph */
+  .glyph{
+    width:26px;
+    height:26px;
+    margin-bottom:1.4rem;
+    opacity:0.75;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+
+  ::selection{ background:rgba(217,184,119,0.35); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sky"></div>
+  <canvas id="stars"></canvas>
+  <div class="vignette"></div>
+
+  <!-- LANDING -->
+  <section class="screen" id="landing">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="#d9b877" stroke-width="1">
+      <path d="M12 2 L12 22 M4 9 C4 9 8 6 12 10 C16 6 20 9 20 9" />
+    </svg>
+    <div class="eyebrow">A private invitation</div>
+    <h1 class="headline">Alabi, I have <em>a proposal.</em></h1>
+    <p class="subline">Would you study and practice the gifts of the Spirit with me?</p>
+    <p class="fine">Not because we think we have everything figured out.<br/>Just because I think some things are better explored together.</p>
+
+    <div class="button-row" id="buttonRow">
+      <button class="btn-yes" id="yesBtn">Yes</button>
+      <button class="btn-no" id="noBtn">No</button>
+    </div>
+  </section>
+
+  <!-- REVEAL -->
+  <section class="screen" id="reveal">
+    <div class="reveal-inner">
+      <div class="reveal-top">
+        <div class="eyebrow">Response received</div>
+        <h2 class="reveal-title">Excellent decision.</h2>
+        <p class="reveal-sub">Then let's begin.</p>
+        <div class="word-stack" id="wordStack">
+          <span style="animation-delay:0.1s">Study</span>
+          <span style="animation-delay:0.3s">Pray</span>
+          <span style="animation-delay:0.5s">Practice</span>
+          <span style="animation-delay:0.7s">Discern</span>
+          <span style="animation-delay:0.9s">Grow</span>
+        </div>
+        <p class="reveal-para">I don't want this to be about trying to prove anything. I just want us to learn what Scripture says, ask honest questions, pray about it, and see where God leads us.</p>
+      </div>
+
+      <div class="study-heading">Our Study</div>
+      <div class="study-subheading">Eight conversations, no fixed order</div>
+
+      <div class="card-grid">
+        <div class="study-card"><span class="study-num">01</span><div class="study-title">What are spiritual gifts?</div><div class="study-ref">1 Corinthians 12</div></div>
+        <div class="study-card"><span class="study-num">02</span><div class="study-title">The gifts in Scripture</div><div class="study-ref">Romans 12:3–8</div></div>
+        <div class="study-card"><span class="study-num">03</span><div class="study-title">Gifts vs. natural abilities</div><div class="study-ref">1 Corinthians 12</div></div>
+        <div class="study-card"><span class="study-num">04</span><div class="study-title">Why are the gifts given?</div><div class="study-ref">Ephesians 4:11–13</div></div>
+        <div class="study-card"><span class="study-num">05</span><div class="study-title">Discernment</div><div class="study-ref">1 Thessalonians 5:19–22</div></div>
+        <div class="study-card"><span class="study-num">06</span><div class="study-title">Practicing the gifts responsibly</div><div class="study-ref">1 Peter 4:10–11</div></div>
+        <div class="study-card"><span class="study-num">07</span><div class="study-title">Testing what we experience</div><div class="study-ref">1 Thessalonians 5:19–22</div></div>
+        <div class="study-card"><span class="study-num">08</span><div class="study-title">Love as the foundation</div><div class="study-ref">1 Corinthians 13</div></div>
+      </div>
+
+      <p class="closing-line"><strong>Two people.</strong> One Bible.<br/>A lot of questions.<br/>Let's see what God teaches us.</p>
+
+      <button class="btn-begin" id="beginBtn">Let's start →</button>
+      <div class="final-note" id="finalNote">Then let's begin, for real. 🕊</div>
+    </div>
+  </section>
+
+  <div class="burst" id="burst"></div>
+</div>
+
+<script>
+  // ---------- starfield ----------
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const count = Math.floor((canvas.width * canvas.height) / 9000);
+    stars = Array.from({length: count}, () => ({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*1.1 + 0.2,
+      base: Math.random()*0.5+0.15,
+      speed: Math.random()*0.015+0.003,
+      phase: Math.random()*Math.PI*2
+    }));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  function drawStars(t){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){
+      const tw = s.base + Math.sin(t*s.speed + s.phase)*0.35;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(243,236,217,${Math.max(0,tw)})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(drawStars);
+  }
+  requestAnimationFrame(drawStars);
+
+  // ---------- NO button: static position, text cycles on each click ----------
+  const noBtn = document.getElementById('noBtn');
+
+  const messages = [
+    "No",
+    "Are you sure?",
+    "Really? 😭",
+    "Think again.",
+    "Alabi please.",
+    "You know you want to say yes 😂",
+    "Okay this is embarrassing.",
+    "I'm not going to let you.",
+    "Wrong button 😂",
+    "You don't mean that.",
+    "Be serious.",
+    "Last chance to reconsider.",
+    "I'll just wait here."
+  ];
+
+  let attempts = 0;
+
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    attempts++;
+    const idx = Math.min(attempts, messages.length - 1);
+    noBtn.textContent = messages[idx];
+
+    noBtn.classList.remove('shrink-1','shrink-2','shrink-3','shrink-4','shrink-5');
+    if(attempts >= 10) noBtn.classList.add('shrink-5');
+    else if(attempts >= 8) noBtn.classList.add('shrink-4');
+    else if(attempts >= 6) noBtn.classList.add('shrink-3');
+    else if(attempts >= 4) noBtn.classList.add('shrink-2');
+    else if(attempts >= 2) noBtn.classList.add('shrink-1');
+
+    noBtn.classList.remove('pulse');
+    void noBtn.offsetWidth;
+    noBtn.classList.add('pulse');
+  });
+
+  // ---------- YES button ----------
+  const burst = document.getElementById('burst');
+  const reveal = document.getElementById('reveal');
+  const landing = document.getElementById('landing');
+  const beginBtn = document.getElementById('beginBtn');
+  const finalNote = document.getElementById('finalNote');
+  const yesBtn = document.getElementById('yesBtn');
+
+  const HEART_SVG = `<svg viewBox="0 0 32 29" xmlns="http://www.w3.org/2000/svg"><path d="M16 29 C16 29 0 18.5 0 8.8 C0 3.4 4.2 0 8.9 0 C12.1 0 14.6 1.9 16 4.6 C17.4 1.9 19.9 0 23.1 0 C27.8 0 32 3.4 32 8.8 C32 18.5 16 29 16 29 Z" fill="currentColor"/></svg>`;
+
+  function makeHearts(n){
+    burst.innerHTML = `<div class="burst-core" style="color:var(--gold-bright)">${HEART_SVG}</div>`;
+    for(let i=0;i<n;i++){
+      const h = document.createElement('div');
+      h.className = 'burst-heart';
+      h.style.color = 'var(--gold-bright)';
+      h.innerHTML = HEART_SVG;
+      const angle = (Math.PI*2/n)*i + (Math.random()*0.4 - 0.2);
+      const dist = 90 + Math.random()*140;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 20;
+      const sc = 1.2 + Math.random()*1.6;
+      h.style.setProperty('--dx', dx + 'px');
+      h.style.setProperty('--dy', dy + 'px');
+      h.style.setProperty('--sc', sc);
+      h.style.fontSize = (12 + Math.random()*10) + 'px';
+      h.style.animationDelay = (Math.random()*0.15) + 's';
+      burst.appendChild(h);
+    }
+  }
+
+  yesBtn.addEventListener('click', () => {
+    makeHearts(16);
+    burst.classList.remove('play');
+    void burst.offsetWidth;
+    burst.classList.add('play');
+
+    setTimeout(() => {
+      landing.classList.add('hidden');
+      reveal.classList.add('visible');
+      window.scrollTo({top:0, behavior:'instant'});
+    }, 480);
+  });
+
+  // ---------- "Let's start" -> opens a Telegram chat with a pre-filled message ----------
+  // Replace YOUR_TELEGRAM_USERNAME below with your actual @username (no @ symbol).
+  const TELEGRAM_USERNAME = 'itz_mharvee';
+  const TELEGRAM_MESSAGE = "I'm so honored to go on this journey with you my hero I'm your biggest fan";
+
+  beginBtn.addEventListener('click', () => {
+    finalNote.classList.add('show');
+    beginBtn.style.opacity = '0.5';
+    beginBtn.style.pointerEvents = 'none';
+
+    const link = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(TELEGRAM_MESSAGE)}`;
+    window.open(link, '_blank');
+  });
+</script>
+</body>
+</html>
